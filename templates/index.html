@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webhook Dashboard</title>
+  </head>
+  <body>
+    <h1>Welcome to the Dashboard!</h1>
+    <h2>Real-time data</h2>
+    <div id="data-container"></div>
+    <script>
+      async function fetchData() {
+        try {
+          const response = await fetch("/webhook/getdata"); // fetch the data
+          const data = await response.json();
+          const container = document.getElementById("data-container");
+          container.innerHTML = ""; // Clear existing content
+
+          data.forEach((item) => {
+            const p = document.createElement("p");
+            let message;
+            if (item.action === "PULL_REQUEST") {
+              // If action is a new 'PULL REQUEST'
+              if (item.pull_request_action === "opened") {
+                message = `"${item.author}" submitted a pull request from "${item.from_branch}" to "${item.to_branch}" on ${item.timestamp}`;
+              } 
+              else {
+                // If 'PULL REQUEST' is updated
+                message = `"${item.author}" updated a pull request from "${item.from_branch}" to "${item.to_branch}" on ${item.timestamp}`;
+              }
+            }
+
+            else if (item.action === "PUSH") {
+              // If action is a 'PUSH'
+              message = `"${item.author}" pushed to "${item.branch}" on ${item.timestamp}`;
+            } 
+            
+            else {
+              // If action is a 'MERGE'
+              message = `"${item.author}" merged branch "${item.from_branch}" to "${item.to_branch}" on ${item.timestamp}`;
+            }
+
+            p.textContent = message;
+            container.appendChild(p);
+          });
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      }
+
+      // Initial fetch
+      fetchData();
+
+      // Fetch data every 15 seconds
+      setInterval(fetchData, 15000);
+    </script>
+  </body>
+</html>
